@@ -99,10 +99,10 @@ for line in hIN:
     junction1 = {};
     if tabixErrorFlag == 0:
         for record in records:
-            exon1[record[3]] = record[4]
+            exon1[record[3]] = int(record[4])
             if abs(int(F[1]) - int(record[2])) < junction_margin:
-                if record[5] == "+": junction1[record[3]] = "end"
-                if record[5] == "-": junction1[record[3]] = "start"
+                if record[5] == "+": junction1[record[3]] = "e"
+                if record[5] == "-": junction1[record[3]] = "s"
     ##########
 
     ##########
@@ -119,101 +119,141 @@ for line in hIN:
     junction2 = {};
     if tabixErrorFlag == 0:
         for record in records:
-            exon2[record[3]] = record[4]
+            exon2[record[3]] = int(record[4])
             if abs(int(F[2]) - int(record[1])) < junction_margin:
-                if record[5] == "+": junction2[record[3]] = "start"
-                if record[5] == "-": junction2[record[3]] = "end"
+                if record[5] == "+": junction2[record[3]] = "s"
+                if record[5] == "-": junction2[record[3]] = "e"
     ##########
 
 
     spliceClass = ""
-    checkGenes = list(set([gene1, gene2]))
+    checkGenes = list(set(gene1 + gene2))
     ##########
     # check for know junction
     passGene = []
     for gene in checkGenes:
         if gene in gene1 and gene in gene2 and gene in junction1 and gene in junction2:
-            if junction1[gene] == "end" and junction2[gene] == "start" and exon2[gene] - exon1[gene] == 1: passGene.append(gene)
-            if junction2[gene] == "end" and junction1[gene] == "start" and exon1[gene] - exon2[gene] == 1: passGene.append(gene)
+            if junction1[gene] == "e" and junction2[gene] == "s" and exon2[gene] - exon1[gene] == 1: passGene.append(gene)
+            if junction2[gene] == "e" and junction1[gene] == "s" and exon1[gene] - exon2[gene] == 1: passGene.append(gene)
 
-    if len(passGene) > 1: spliceClass = "known"
-
+    if len(passGene) > 0: spliceClass = "known"
 
     ##########
     # check for exon skip
-    if spliceClass != "":
+    if spliceClass == "":
         passGene = []
         for gene in checkGenes:
             if gene in gene1 and gene in gene2 and gene in junction1 and gene in junction2:
-                if junction1[gene] == "end" and junction2[gene] == "start" and exon2[gene] - exon1[gene] > 1: passGene.append(gene)
-                if junction2[gene] == "end" and junction1[gene] == "start" and exon1[gene] - exon2[gene] > 1: passGene.append(gene)
+                if junction1[gene] == "e" and junction2[gene] == "s" and exon2[gene] - exon1[gene] > 1: passGene.append(gene)
+                if junction2[gene] == "e" and junction1[gene] == "s" and exon1[gene] - exon2[gene] > 1: passGene.append(gene)
 
-    if len(passGene) > 1: spliceClass = "exon-skip"
+        if len(passGene) > 0: spliceClass = "exon-skip"
 
 
     ##########
     # check for splice-site slip 
-    if spliceClass != "":
+    if spliceClass == "":
         passGene = []
         for gene in checkGenes:
             if gene in gene1 and gene in gene2 and gene:
                 if gene in junction1 and gene in exon2 and gene not in junction2: passGene.append(gene)
                 if gene in junction2 and gene in exon1 and gene not in junction1: passGene.append(gene)
 
-    if len(passGene) > 1: spliceClass = "splice-site-slip"
+        if len(passGene) > 0: spliceClass = "splice-site-slip"
  
 
     ##########
     # check for pseudo-exon inclusion 
-    if spliceClass != "":
+    if spliceClass == "":
         passGene = []
         for gene in checkGenes:
             if gene in gene1 and gene in gene2 and gene: 
                 if gene in junction1 and gene not in exon2: passGene.append(gene)
                 if gene in junction2 and gene not in exon1: passGene.append(gene)
                  
-    if len(passGene) > 1: spliceClass = "pseudo-exon inclusion"
+        if len(passGene) > 0: spliceClass = "pseudo-exon inclusion"
 
 
     ##########
     # check for within-gene 
-    if spliceClass != "":
+    if spliceClass == "":
         passGene = []
         for gene in checkGenes:
             if gene in gene1 and gene in gene2 and gene: passGene.append(gene)   
     
-    if len(passGene) > 1: spliceClass = "within-gene"
+        if len(passGene) > 0: spliceClass = "within-gene"
 
 
     ##########
     # check for spliced-chimera 
-    if spliceClass != "":
+    if spliceClass == "":
         passGene = []
         for g1 in gene1:
             for g2 in gene2:
-                if junction1[g1] == "start" and junction2[g2] == "end": passGene.append(g1 + ',' + g2)
-                if junction1[g1] == "end" and junction2[g2] == "start": passGene.append(g1 + ',' + g2)
+                if junction1[g1] == "s" and junction2[g2] == "e": passGene.append(g1 + ',' + g2)
+                if junction1[g1] == "e" and junction2[g2] == "s": passGene.append(g1 + ',' + g2)
 
-    if len(passGene) > 1: spliceClass = "spliced-chimera"
+        if len(passGene) > 0: spliceClass = "spliced-chimera"
 
 
     ##########
     # check for unspliced-chimera 
-    if spliceClass != "":
+    if spliceClass == "":
         passGene = []
         for g1 in gene1:
             for g2 in gene2:
                 passGene.append(g1 + ',' + g2)
 
-    if len(passGene) > 1: spliceClass = "unspliced-chimera"
+        if len(passGene) > 0: spliceClass = "unspliced-chimera"
 
 
+    if spliceClass == "": spliceClass = "other"
+    
+
+    # summarize the exon and junction information for display
+    exonInfo1 = []
+    junctionInfo1 = []
+    if len(gene1) > 0:
+        for g1 in gene1:
+            if g1 in exon1: 
+                exonInfo1.append(str(exon1[g1]))
+            else:
+                exonInfo1.append("*")
+
+            if g1 in junction1:
+                junctionInfo1.append(junction1[g1])
+            else:
+                junctionInfo1.append("*")
+
+    else:
+        gene1.append("---")
+        exonInfo1.append("---")
+        junctionInfo1.append("---")
 
 
+    exonInfo2 = []
+    junctionInfo2 = []
+    if len(gene2) > 0:
+        for g2 in gene2:
+            if g2 in exon2:
+                exonInfo2.append(str(exon2[g2]))
+            else:
+                exonInfo2.append("*")
+            
+            if g2 in junction2:
+                junctionInfo2.append(junction2[g2])
+            else:
+                junctionInfo2.append("*")
+                
+    else:
+        gene2.append("---")
+        exonInfo2.append("---")
+        junctionInfo2.append("---")
 
 
+ 
 
-    print '\t'.join(F[0:3]) + '\t' + '\t'.join([';'.join(gene1), ';'.join(exon1), ';'.join(junction1), ';'.join(gene2), ';'.join(exon2), ';'.join(junction2)]) 
+    print '\t'.join(F[0:3]) + '\t' + spliceClass + '\t' + '\t'.join([';'.join(gene1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(gene2), ';'.join(exonInfo2), ';'.join(junctionInfo2)])
+ 
 
-
-hIN.close() 
+hIN.close()
