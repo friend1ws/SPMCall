@@ -171,7 +171,7 @@ for line in hIN:
                 if gene in junction1 and gene not in exon2: passGene.append(gene)
                 if gene in junction2 and gene not in exon1: passGene.append(gene)
                  
-        if len(passGene) > 0: spliceClass = "pseudo-exon inclusion"
+        if len(passGene) > 0: spliceClass = "pseudo-exon-inclusion"
 
 
     ##########
