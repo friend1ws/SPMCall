@@ -190,8 +190,8 @@ for line in hIN:
         passGene = []
         for g1 in gene1:
             for g2 in gene2:
-                if junction1[g1] == "s" and junction2[g2] == "e": passGene.append(g1 + ',' + g2)
-                if junction1[g1] == "e" and junction2[g2] == "s": passGene.append(g1 + ',' + g2)
+                if g1 in junction1 and junction1[g1] == "s" and g2 in junction2 and junction2[g2] == "e": passGene.append(g1 + ',' + g2)
+                if g1 in junction1 and junction1[g1] == "e" and g2 in junction2 and junction2[g2] == "s": passGene.append(g1 + ',' + g2)
 
         if len(passGene) > 0: spliceClass = "spliced-chimera"
 

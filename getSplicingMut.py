@@ -42,11 +42,23 @@ for line in hIN:
     if F[3] not in ["exon-skip", "splice-site-slip", "pseudo-exon-inclusion"]: continue
     firstSearchRegion = [F[0], int(F[1]), int(F[2])]
     splicingMotifRegions = []
+    targetGene  =[]
 
     # we need to detect the non exon-intron junction break points
     # current procedure may be not perfect and be subject to change..
+    gene1 = F[4].split(';')
+    gene2 = F[7].split(';')
     junction1 = F[6].split(';')   
     junction2 = F[9].split(';')
+
+
+    # just consider genes sharing the exon-intron junction with the breakpoints of splicings
+    for i in range(0, len(gene1)):
+        if junction1[i] != "*": targetGene.append(gene1[i])
+    for i in range(0, len(gene2)):
+        if junction2[i] != "*": targetGene.append(gene2[i])
+    targetGene = list(set(targetGene))
+
 
     if F[3] in ["splice-site-slip", "pseudo-exon-inclusion"]:
         # for non exon-intron junction breakpoints
@@ -89,6 +101,7 @@ for line in hIN:
         # first, add the exon-intron junction for detailed check region list
         if tabixErrorFlag2 == 0:
             for exon in exons:
+                if exon[3] not in targetGene: continue
                 if exon[5] == "+":
                     # splicing acceptor motif, plus direction
                     splicingMotifRegions.append((exon[0], int(exon[1]) - len(splicingAcceptorMotif[0]) + 1, int(exon[1]) + len(splicingAcceptorMotif[1]), "acceptor", "+", 1))
@@ -112,7 +125,7 @@ for line in hIN:
             for reg in splicingMotifRegions:
 
                 # insertion or deletion (just consider the disruption of splicing motifs now)
-                if len(mutation[3]) > 1 or len(mutation[4]) > 1 and reg[5] == 1:
+                if (len(mutation[3]) > 1 or len(mutation[4]) > 1) and reg[5] == 1:
                     if int(mutation[1]) <= reg[2] - 1 and reg[1] <= int(mutation[1]) + len(mutation[4]) - 1:
                         RegMut.append([reg, "splicing " + reg[3] + " disruption"])
                 
