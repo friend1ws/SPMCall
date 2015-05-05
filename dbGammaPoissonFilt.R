@@ -41,8 +41,10 @@ doubleGammaPoisson2 <- function(params, data) {
 
 }
 
+inputFile <- commandArgs(trailingOnly=TRUE)[1]
+outputFile <- commandArgs(trailingOnly=TRUE)[2]
 
-bdata <- read.table(commandArgs()[5], sep="\t",header=F);
+bdata <- read.table(inputFile, sep="\t",header=F);
 targetDepth_T <- bdata[, 1]
 targetDepth_N <- bdata[, 2]
 flankingDepth_T <- bdata[, 3]
@@ -87,5 +89,5 @@ for (i in 1:nrow(bdata)) {
     }
 }
 
-write.table(cbind(infoData[PVs >= 3 & tumorRateCheck == 0,,drop=FALSE], as.matrix(PVs)[PVs >= 3 & tumorRateCheck == 0,,drop=FALSE]), commandArgs()[6], sep="\t", row.names= FALSE, col.names = FALSE, quote = FALSE);
+write.table(cbind(infoData[PVs[,1] >= 5 & tumorRateCheck[,1] == 0,,drop=FALSE], as.matrix(PVs)[PVs[,1] >= 5 & tumorRateCheck[,1] == 0,,drop=FALSE]), outputFile, sep="\t", row.names= FALSE, col.names = FALSE, quote = FALSE);
 

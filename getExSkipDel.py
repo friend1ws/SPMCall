@@ -34,7 +34,7 @@ def cmp_chrPos(x1, x2):
 for line in hIN:
     F = line.rstrip('\n').split('\t')
     
-    if F[3] != "exon-skip": continue
+    if F[4] != "exon-skip": continue
     searchRegion1 = [F[0], int(F[1]) + 10, int(F[2]) - 10]
     searchRegion2 = [F[0], int(F[1]) - margin2, int(F[1]) - margin1]
     searchRegion3 = [F[0], int(F[2]) + margin1, int(F[2]) + margin2]

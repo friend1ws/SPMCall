@@ -253,7 +253,7 @@ for line in hIN:
 
  
 
-    print '\t'.join(F[0:3]) + '\t' + spliceClass + '\t' + '\t'.join([';'.join(gene1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(gene2), ';'.join(exonInfo2), ';'.join(junctionInfo2)])
+    print '\t'.join(F[0:4]) + '\t' + spliceClass + '\t' + '\t'.join([';'.join(gene1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(gene2), ';'.join(exonInfo2), ';'.join(junctionInfo2)])
  
 
 hIN.close()
