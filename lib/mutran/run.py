@@ -26,7 +26,7 @@ def main(args):
     if is_anno == True:
         utils.convert_anno2vcf(mutation_file, output_prefix + ".unsorted.vcf", reference_genome)
     else:
-        shutil.copy(mutation_file, output_prefix + ".unsorted.vcf")
+        utils.remove_vcf_header(mutation_file, output_prefix + ".unsorted.vcf")
 
     hout = open(output_prefix + ".vcf", 'w')
     s_ret = subprocess.call(["sort", "-k1,1", "-k2,2n", output_prefix + ".unsorted.vcf"], stdout = hout)

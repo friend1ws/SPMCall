@@ -66,4 +66,13 @@ def convert_anno2vcf(input_file, output_file, reference):
 
 
      
+def remove_vcf_header(input_file, output_file):
+
+    hout = open(output_file, 'w')
+    with open(input_file, 'r') as hin:
+        for line in hin:
+            line = line.rstrip('\n')
+            if not line.startswith('#'): print line
+
+    hout.close()
 
