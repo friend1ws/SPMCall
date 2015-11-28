@@ -1,0 +1,28 @@
+#! /usr/bin/env python
+
+from mutran.run import *
+import argparse
+
+parser = argparse.ArgumentParser(prog = "mutran")
+
+parser.add_argument("--version", action = "version", version = "mutran-0.1.0")
+
+parser.add_argument("mutation_file", metavar = "mutation.vcf.gz", default = None, type = str,
+                    help = "the path to the mutation file")
+
+parser.add_argument("junction_file", metavar = "junction.bed", default = None, type = str,
+                    help = "the path to the splicing junction file")
+
+parser.add_argument("output_prefix", metavar = "output_prefix", default = None, type = str, 
+                    help = "the prefix of the output")
+
+parser.add_argument("param", metavar = "param.cfg", default = None, type = str,
+                    help = "parameter information file (to be parsed by ConfigParser module)")
+
+parser.add_argument('-f', choices=['vcf', 'anno'], default = 'vcf',
+                    help = "the format of mutation file vcf or annovar (tsv) format")
+
+args = parser.parse_args()
+
+main(args)
+
