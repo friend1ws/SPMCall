@@ -22,14 +22,17 @@ def main(args):
     if output_prefix_dir != "" and not os.path.exists(output_prefix_dir):
        os.makedirs(output_prefix_dir)
 
+    ##########
+    # processing mutation file
+
     # convert mutation data to vcf (if --anno is on)
     if is_anno == True:
-        utils.convert_anno2vcf(mutation_file, output_prefix + ".unsorted.vcf", reference_genome)
+        utils.convert_anno2vcf(mutation_file, output_prefix + ".mutran_tmp.unsorted.vcf", reference_genome)
     else:
-        utils.remove_vcf_header(mutation_file, output_prefix + ".unsorted.vcf")
+        utils.remove_vcf_header(mutation_file, output_prefix + ".mutran_tmp.unsorted.vcf")
 
-    hout = open(output_prefix + ".vcf", 'w')
-    s_ret = subprocess.call(["sort", "-k1,1", "-k2,2n", output_prefix + ".unsorted.vcf"], stdout = hout)
+    hout = open(output_prefix + ".mutran_tmp.vcf", 'w')
+    s_ret = subprocess.call(["sort", "-k1,1", "-k2,2n", output_prefix + ".mutran_tmp.unsorted.vcf"], stdout = hout)
     hout.close()
 
     if s_ret != 0:
@@ -37,17 +40,28 @@ def main(args):
         sys.exit(1)
 
 
-    s_ret = subprocess.call([parser.get("software", "bgzip"), "-f", output_prefix + ".vcf"])
+    s_ret = subprocess.call([parser.get("software", "bgzip"), "-f", output_prefix + ".mutran_tmp.vcf"])
     if s_ret != 0:
         print >> sys.stderr, "Error in bgzip compression"
         sys.exit(1)
 
 
-    s_ret = subprocess.call([parser.get("software", "tabix"), "-p", "vcf", output_prefix + ".vcf.gz"])
+    s_ret = subprocess.call([parser.get("software", "tabix"), "-p", "vcf", output_prefix + ".mutran_tmp.vcf.gz"])
     if s_ret != 0:
         print >> sys.stderr, "Error in tabix indexing"
         sys.exit(1)
+    ##########
 
+
+    ##########
+    # processing splicing junction file
+    utils.proc_star_junction(junction_file, output_prefix + ".mutran_tmp.junction.txt", 
+                             parser.getint("star_junction_filt", "read_num_thres"), 
+                             parser.getint("star_junction_filt", "overhang_thres"),
+                             parser.getboolean("star_junction_filt", "remove_annotated"))
+
+    ##########
+     
     """
     s_ret = subprocess.call(["bgzip", "-f", output_prefix + ".vcf"])
 
