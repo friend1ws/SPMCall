@@ -72,7 +72,7 @@ def remove_vcf_header(input_file, output_file):
     with open(input_file, 'r') as hin:
         for line in hin:
             line = line.rstrip('\n')
-            if not line.startswith('#'): print line
+            if not line.startswith('#'): print >> hout, line
 
     hout.close()
 
@@ -90,6 +90,10 @@ def proc_star_junction(input_file, output_file, read_num_thres, overhang_thres, 
             if remove_annotated == True and F[5] != "0": continue
             if int(F[6]) < read_num_thres: continue
             if int(F[8]) < overhang_thres: continue
+
+            # convert to map-splice2 coordinate
+            F[1] = str(int(F[1]) - 1)
+            F[2] = str(int(F[2]) + 1)
 
             print >> hout, '\t'.join(F)
 

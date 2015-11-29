@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
-def annot_junction(input_file, output_file, gene_file, exon_file):
+import tabix
+import sys
+
+def annot_junction(input_file, output_file, annotation_dir):
 
     """
         The purpose of this script is to classify splicing changes
@@ -35,30 +38,37 @@ def annot_junction(input_file, output_file, gene_file, exon_file):
 
     """
 
-    import sys, tabix
+    ref_gene_bed = annotation_dir + "/refGene.bed.gz"
+    ref_exon_bed = annotation_dir + "/refExon.bed.gz"
+    grch2ucsc_file = annotation_dir + "/grch2ucsc.txt"
 
-    geneFile = sys.argv[2]
-    exonFile = sys.argv[3]
+    # relationship between CRCh and UCSC chromosome names
+    grch2ucsc = {}
+    with open(grch2ucsc_file, 'r') as hin:
+        for line in hin:
+            F = line.rstrip('\n').split('\t')
+            grch2ucsc[F[0]] = F[1]
 
     junction_margin = 3
     exon_margin = 30
 
     hin = open(input_file, 'r')
     hout = open(output_file, 'w')
-    gene_tb = tabix.open(gene_file)
-    exon_tb = tabix.open(exon_file)
+    gene_tb = tabix.open(ref_gene_bed)
+    exon_tb = tabix.open(ref_exon_bed)
 
     for line in hin:
         F = line.rstrip('\n').split('\t')
+        chr_name = grch2ucsc[F[0]] if F[0] in grch2ucsc else F[0]
 
         ##########
         # check gene annotation for the side 1  
         tabixErrorFlag = 0
         try:
-            records = gene_tb.query(F[0], int(F[1]) - 1, int(F[1]))
+            records = gene_tb.query(chr_name, int(F[1]) - 1, int(F[1]))
         except Exception as inst:
-            print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
-            print >> sys.stderr, '\t'.join(F)
+            # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+            # print >> sys.stderr, '\t'.join(F)
             tabixErrorFlag = 1
 
         gene1 = [];
@@ -73,10 +83,10 @@ def annot_junction(input_file, output_file, gene_file, exon_file):
         # check gene annotation for the side 2  
         tabixErrorFlag = 0
         try:
-            records = gene_tb.query(F[0], int(F[2]) - 1, int(F[2]))
+            records = gene_tb.query(chr_name, int(F[2]) - 1, int(F[2]))
         except Exception as inst:
-            print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
-            print >> sys.stderr, '\t'.join(F)
+            # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+            # print >> sys.stderr, '\t'.join(F)
             tabixErrorFlag = 1
             
         gene2 = [];
@@ -91,10 +101,10 @@ def annot_junction(input_file, output_file, gene_file, exon_file):
         # check exon and junction annotation for the side 1  
         tabixErrorFlag = 0
         try:
-            records = exon_tb.query(F[0], int(F[1]) - exon_margin, int(F[1]) + exon_margin)
+            records = exon_tb.query(chr_name, int(F[1]) - exon_margin, int(F[1]) + exon_margin)
         except Exception as inst:
-            print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
-            print >> sys.stderr, '\t'.join(F)
+            # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+            # print >> sys.stderr, '\t'.join(F)
             tabixErrorFlag = 1
         
         exon1 = {};
@@ -111,10 +121,10 @@ def annot_junction(input_file, output_file, gene_file, exon_file):
         # check exon and junction annotation for the side 2
         tabixErrorFlag = 0
         try:
-            records = exon_tb.query(F[0], int(F[2]) - exon_margin, int(F[2]) + exon_margin)
+            records = exon_tb.query(chr_name, int(F[2]) - exon_margin, int(F[2]) + exon_margin)
         except Exception as inst:
-            print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
-            print >> sys.stderr, '\t'.join(F)
+            # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+            # print >> sys.stderr, '\t'.join(F)
             tabixErrorFlag = 1
 
         exon2 = {};
@@ -255,7 +265,7 @@ def annot_junction(input_file, output_file, gene_file, exon_file):
 
      
 
-        print >> hout, '\t'.join(F[0:4]) + '\t' + spliceClass + '\t' + '\t'.join([';'.join(gene1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(gene2), ';'.join(exonInfo2), ';'.join(junctionInfo2)])
+        print >> hout, '\t'.join(F[0:3]) + '\t' + spliceClass + '\t' + '\t'.join([';'.join(gene1), ';'.join(exonInfo1), ';'.join(junctionInfo1), ';'.join(gene2), ';'.join(exonInfo2), ';'.join(junctionInfo2)])
      
 
     hin.close()

@@ -4,6 +4,8 @@ import sys, os, subprocess, shutil
 import ConfigParser
 
 import utils
+import annotate
+import associate 
 
 def main(args):
 
@@ -52,7 +54,6 @@ def main(args):
         sys.exit(1)
     ##########
 
-
     ##########
     # processing splicing junction file
     utils.proc_star_junction(junction_file, output_prefix + ".mutran_tmp.junction.txt", 
@@ -60,48 +61,23 @@ def main(args):
                              parser.getint("star_junction_filt", "overhang_thres"),
                              parser.getboolean("star_junction_filt", "remove_annotated"))
 
+    annotate.annot_junction(output_prefix + ".mutran_tmp.junction.txt",
+                              output_prefix + ".mutran_tmp.junction.annot.txt",
+                              parser.get("annotation", "annotation_dir"))
     ##########
-     
-    """
-    s_ret = subprocess.call(["bgzip", "-f", output_prefix + ".vcf"])
 
-    # compress and add index
+    ##########
+    # associate mutation and junction
+    associate.get_snv_junction(output_prefix + ".mutran_tmp.junction.annot.txt",
+                               output_prefix + ".splicing_mutation.txt",
+                               output_prefix + ".mutran_tmp.vcf.gz",
+                               parser.get("annotation", "annotation_dir"))
+    ##########
 
-    utils.filterImproper(input_bam, output_prefix + ".filt.bam", mapq_thres)
-
-
-    hOUT = open(output_prefix + ".filt.bed12", 'w')
-    s_ret = subprocess.call([bedtools_path + "/bedtools", "bamtobed", "-bed12", "-i", output_prefix + ".filt.bam"], stdout = hOUT)
-    hOUT.close()
-
-    if s_ret != 0:
-        print >> sys.stderr, "error in generating filt.bed12"
-        sys.exit(1)
-
-
-    hOUT = open(output_prefix + ".edge.bed", 'w')
-    s_ret = subprocess.call([bedtools_path + "/bedtools", "intersect", "-a", output_prefix + ".filt.bed12", "-b", annotation_dir + "/edge.bed", 
-                     "-split", "-wao"], stdout = hOUT)
-    hOUT.close()
-
-    if s_ret != 0:
-        print >> sys.stderr, "error in generating edge.bed"
-        sys.exit(1)
-
-    hOUT = open(output_prefix + ".edge_broaden.bed", 'w')
-    s_ret = subprocess.call([bedtools_path + "/bedtools", "intersect", "-a", output_prefix + ".filt.bed12", "-b", annotation_dir + "/edge_broaden.bed", 
-                     "-split", "-wao"], stdout = hOUT)
-    hOUT.close()
-
-    if s_ret != 0:
-        print >> sys.stderr, "error in generating edge_broaden.bed"
-        sys.exit(1)
-
-    utils.summarize_edge(output_prefix + ".edge.bed", output_prefix + ".edge_broaden.bed", output_prefix + ".intron.bed", 5)
-
-    subprocess.call(["rm", "-rf", output_prefix + ".filt.bam"])
-    subprocess.call(["rm", "-rf", output_prefix + ".filt.bed12"])
-    subprocess.call(["rm", "-rf", output_prefix + ".exon.bed"])
-    subprocess.call(["rm", "-rf", output_prefix + ".exon2base.txt"])
-    """
+    if parser.getboolean("debug", "debug_mode") != True:
+        subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.unsorted.vcf"])
+        subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.vcf.gz"])
+        subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.vcf.gz.tbi"])
+        subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.junction.txt"])
+        subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.junction.annot.txt"])
 

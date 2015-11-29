@@ -19,17 +19,24 @@ with gzip.open(inputFile, 'r') as hin:
         exon_starts = F[9].split(',')
         exon_ends = F[10].split(',')
 
+        """
         size = 0
         for i in range(len(exon_starts) - 1):
             size = size + int(exon_ends[i]) - int(exon_starts[i])
+        """
 
-        key = chr + '\t' + gene_start + '\t' + gene_end
-        if gene_type == "ref": 
-            print key + '\t' + symbol + '\t' + str(size) + '\t' + strand
+        gene_print_name = "---"
+        if gene_type == "ref":
+            # gene_print_name = symbol
+            gene_print_name = symbol + "(" + gene_id + ")"
         elif gene_type == "ens":
-            print key + '\t' + gene_id + '\t' + str(size) + '\t' + strand
+            gene_print_name = gene_id
         else:
             print >> sys.stderr, "The 2nd argument should be ref or ens"
             sys.exit(1)
+
+
+        key = chr + '\t' + gene_start + '\t' + gene_end
+        print key + '\t' + gene_print_name + '\t' + "0" + '\t' + strand
 
 

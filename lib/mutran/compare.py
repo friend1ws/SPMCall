@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 
-import tabix
-import numpy
+import sys, tabix, numpy
 
-
-def get_snv_junction(input_file, output_file, mutation_file, exon_file):
+def comp_mut_junction(input_file, output_file, mutation_file, annotation_dir):
 
     """
         a script for detecting candidate somatic substitutions causing splicing changes
@@ -32,16 +30,26 @@ def get_snv_junction(input_file, output_file, mutation_file, exon_file):
                'R': [1, 0, 1, 0], 'Y': [0, 1, 0, 1], 'B': [0, 1, 1, 1], 'D': [1, 0, 1, 1], \
                'H': [1, 1, 0, 1], 'V': [1, 1, 1, 0], 'N': [1, 1, 1, 1]}
 
+    ref_exon_bed = annotation_dir + "/refExon.bed.gz"
+    grch2ucsc_file = annotation_dir + "/grch2ucsc.txt"
+
+    # relationship between CRCh and UCSC chromosome names
+    grch2ucsc = {}
+    with open(grch2ucsc_file, 'r') as hin:
+        for line in hin:
+            F = line.rstrip('\n').split('\t')
+            grch2ucsc[F[0]] = F[1]
 
     hin = open(input_file, 'r')
-    hout = open(output_file, 'w')
     mutation_tb = tabix.open(mutation_file)
-    exon_tb = tabix.open(exon_file)
+    exon_tb = tabix.open(ref_exon_bed)
 
     for line in hin:
         F = line.rstrip('\n').split('\t') 
+        chr_name = grch2ucsc[F[0]] if F[0] in grch2ucsc else F[0]
+
         if F[3] not in ["exon-skip", "splice-site-slip", "pseudo-exon-inclusion"]: continue
-        firstSearchRegion = [F[0], int(F[1]), int(F[2])]
+        firstSearchRegion = [chr_name, int(F[1]), int(F[2])]
         splicingMotifRegions = []
         targetGene  =[]
 
@@ -65,16 +73,16 @@ def get_snv_junction(input_file, output_file, mutation_file, exon_file):
             # for non exon-intron junction breakpoints
             if "*" in junction1 and "s" in junction2: # splicing donnor motif, plus direction
                 firstSearchRegion[1] = firstSearchRegion[1] - searchMargin1
-                splicingMotifRegions.append((F[0], int(F[1]) - len(splicingDonnorMotif[0]) + 1, int(F[1]) + len(splicingDonnorMotif[1]), "donnor", "+", 0))
+                splicingMotifRegions.append((chr_name, int(F[1]) - len(splicingDonnorMotif[0]) + 1, int(F[1]) + len(splicingDonnorMotif[1]), "donnor", "+", 0))
             if "*" in junction1 and "e" in junction2: # splicing acceptor motif, minus direction
                 firstSearchRegion[1] = firstSearchRegion[1] - searchMargin1
-                splicingMotifRegions.append((F[0], int(F[1]) - len(splicingAcceptorMotif[1]) + 1, int(F[1]) + len(splicingAcceptorMotif[0]), "acceptor", "-", 0))
+                splicingMotifRegions.append((chr_name, int(F[1]) - len(splicingAcceptorMotif[1]) + 1, int(F[1]) + len(splicingAcceptorMotif[0]), "acceptor", "-", 0))
             if "s" in junction1 and "*" in junction2: # splicing donnor motif, minus direction
                 firstSearchRegion[2] = firstSearchRegion[2] + searchMargin1
-                splicingMotifRegions.append((F[0], int(F[2]) - len(splicingDonnorMotif[1]), int(F[2]) + len(splicingDonnorMotif[0]) - 1, "donnor", "-", 0))
+                splicingMotifRegions.append((chr_name, int(F[2]) - len(splicingDonnorMotif[1]), int(F[2]) + len(splicingDonnorMotif[0]) - 1, "donnor", "-", 0))
             if "e" in junction1 and "*" in junction2: # # splicing acceptor motif, plus direction
                 firstSearchRegion[2] = firstSearchRegion[2] + searchMargin1
-                splicingMotifRegions.append((F[0], int(F[2]) - len(splicingAcceptorMotif[0]), int(F[2]) + len(splicingAcceptorMotif[1]) - 1, "acceptor", "+", 0))
+                splicingMotifRegions.append((chr_name, int(F[2]) - len(splicingAcceptorMotif[0]), int(F[2]) + len(splicingAcceptorMotif[1]) - 1, "acceptor", "+", 0))
 
 
         ##########
@@ -83,8 +91,8 @@ def get_snv_junction(input_file, output_file, mutation_file, exon_file):
         try:
             mutations = mutation_tb.query(firstSearchRegion[0], firstSearchRegion[1], firstSearchRegion[2])
         except Exception as inst:
-            print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
-            print >> sys.stderr, '\t'.join(F)
+            # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+            # print >> sys.stderr, '\t'.join(F)
             tabixErrorFlag1 = 1
 
         # if there are some mutaions
@@ -95,8 +103,8 @@ def get_snv_junction(input_file, output_file, mutation_file, exon_file):
             try:
                 exons = exon_tb.query(firstSearchRegion[0], firstSearchRegion[1], firstSearchRegion[2])
             except Exception as inst:
-                print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
-                print >> sys.stderr, '\t'.join(F)
+                # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+                # print >> sys.stderr, '\t'.join(F)
                 tabixErrorFlag2 = 1
 
             # first, add the exon-intron junction for detailed check region list
@@ -116,6 +124,9 @@ def get_snv_junction(input_file, output_file, mutation_file, exon_file):
 
 
             splicingMotifRegions = list(set(splicingMotifRegions))
+
+            if F[1] == "56489094" and F[2] == "56490287":
+                pass
 
             # compare each mutation with exon-intron junction regions and non-exon-intorn junction breakpoints.
             for mutation in mutations:
@@ -153,3 +164,4 @@ def get_snv_junction(input_file, output_file, mutation_file, exon_file):
 
     hin.close()
     hout.close()
+

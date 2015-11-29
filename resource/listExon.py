@@ -26,7 +26,8 @@ with gzip.open(inputFile, 'r') as hin:
 
         gene_print_name = "---"
         if gene_type == "ref":
-            gene_print_name = symbol
+            # gene_print_name = symbol
+            gene_print_name = symbol + "(" + gene + ")"
         elif gene_type == "ens":
             gene_print_name = gene_id
         else:
@@ -36,9 +37,9 @@ with gzip.open(inputFile, 'r') as hin:
         for i in range(0, len(exon_starts) - 1):
             key = chr + '\t' + exon_starts[i] + '\t' + exon_ends[i]
             if strand == "+":
-                print key + '\t' + gene_print_name + '\t' + str(size) + '\t' + "+"
+                print key + '\t' + gene_print_name + '\t' + str(i) + '\t' + "+"
             else:
-                print key + '\t' + gene_print_name + '\t' + str(size) + '\t' + "-"
+                print key + '\t' + gene_print_name + '\t' + str(exonNum - i - 1) + '\t' + "-"
 
 
 
