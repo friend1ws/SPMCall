@@ -168,3 +168,70 @@ def get_snv_junction(input_file, output_file, mutation_file, annotation_dir):
 
     hin.close()
     hout.close()
+
+
+
+def get_sv_junction(input_file, output_file, mutation_file, annotation_dir):
+
+    """
+        a script for detecting candidate structural variations (currently just deletions causing splicing changes
+        
+    """
+
+    sv_comp_margin = 10
+    exon_comp_margin = 10
+
+
+    ref_exon_bed = annotation_dir + "/refExon.bed.gz"
+    grch2ucsc_file = annotation_dir + "/grch2ucsc.txt"
+
+    # relationship between CRCh and UCSC chromosome names
+    grch2ucsc = {}
+    with open(grch2ucsc_file, 'r') as hin:
+        for line in hin:
+            F = line.rstrip('\n').split('\t')
+            grch2ucsc[F[0]] = F[1]
+
+    hin = open(input_file, 'r')
+    hout = open(output_file, 'w')
+    mutation_tb = tabix.open(mutation_file)
+    exon_tb = tabix.open(ref_exon_bed)
+
+
+    for line in hin:
+        F = line.rstrip('\n').split('\t')
+
+        if F[2] == "120608012":
+            pass
+        if F[3] not in ["exon-skip"]: continue
+        firstSearchRegion = [F[0], int(F[1]) - sv_comp_margin, int(F[2]) + sv_comp_margin]
+ 
+
+        mutation_sv = []
+        ##########
+        # rough check for the mutation between the spliced region
+        tabixErrorFlag1 = 0
+        try:
+            mutations = mutation_tb.query(F[0], int(F[1]) - sv_comp_margin, int(F[2]) + sv_comp_margin)
+        except Exception as inst:
+            # print >> sys.stderr, "%s: %s at the following key:" % (type(inst), inst.args)
+            # print >> sys.stderr, '\t'.join(F)
+            tabixErrorFlag1 = 1
+
+        # if there are some mutaions
+        if tabixErrorFlag1 == 0 and mutations is not None:
+    
+            for mutation in mutations:
+                if mutation[0] == F[0] and mutation[3] == F[0] and \
+                   int(F[1]) - sv_comp_margin <= int(mutation[2]) and int(mutation[5]) <= int(F[2]) + sv_comp_margin:
+                    mutation_sv.append('\t'.join(mutation))
+
+
+        for mutation in mutation_sv:
+            muts = mutation.split('\t')
+            print >> hout, '\t'.join(F) + '\t' + muts[0] + '\t' + muts[2] + '\t' + muts[8] + '\t' + \
+                                                 muts[3] + '\t' + muts[5] + '\t' + muts[9]
+
+    hin.close()
+    hout.close()
+

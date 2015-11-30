@@ -25,6 +25,10 @@ parser.add_argument('-f', choices=['vcf', 'anno'], default = 'vcf',
 parser.add_argument("--ctrl", metavar = "control_file", default = None, type = str,
                     help = "the path to the control panel junction")
 
+parser.add_argument('--sv', action='store_true',
+                    help = "analysis structural variation file")
+
+
 args = parser.parse_args()
 
 main(args)

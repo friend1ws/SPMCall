@@ -126,3 +126,22 @@ def proc_star_junction(input_file, output_file, control_file, read_num_thres, ov
 
     hout.close()
 
+
+def convert_genosv2bed(input_file, output_file):
+
+    hout = open(output_file, 'w')
+    num = 1
+    with open(input_file, 'r') as hin:
+        for line in hin:
+            F = line.rstrip('\n').split('\t')
+            chr1, chr2 = F[0], F[3]
+            start1, end1 = str(int(F[1]) - 1), F[1]
+            start2, end2 = str(int(F[4]) - 1), F[4]
+            dir1, dir2 = F[2], F[5]
+            name = "SV_" + str(num)
+            score = "0"
+
+            print >> hout, '\t'.join([chr1, start1, end1, chr2, start2, end2, name, score, dir1, dir2])
+
+    hout.close()
+
