@@ -2,6 +2,7 @@
 
 import pysam
 import datetime
+import tabix
 
 def convert_anno2vcf(input_file, output_file, reference):
 
@@ -77,8 +78,11 @@ def remove_vcf_header(input_file, output_file):
     hout.close()
 
 
-def proc_star_junction(input_file, output_file, read_num_thres, overhang_thres, remove_annotated):
+def proc_star_junction(input_file, output_file, control_file, read_num_thres, overhang_thres, remove_annotated):
     
+    is_control = True if control_file is not None else False
+    if is_control: control_db = tabix.open(control_file)
+
     if read_num_thres is None: read_num_thres = 0
     if overhang_thres is None: overhang_thres = 0
     if remove_annotated is None: remove_annotated = False
@@ -87,9 +91,32 @@ def proc_star_junction(input_file, output_file, read_num_thres, overhang_thres, 
     with open(input_file, 'r') as hin:
         for line in hin:
             F = line.rstrip('\n').split('\t')
+            key = F[0] + '\t' + F[1] + '\t' + F[2]
             if remove_annotated == True and F[5] != "0": continue
             if int(F[6]) < read_num_thres: continue
             if int(F[8]) < overhang_thres: continue
+
+            if F[1].startswith("2959542"):
+                pass
+
+            ##########
+            # remove control files
+            if is_control:
+                control_flag = 0
+                tabixErrorFlag = 0
+                try:
+                    records = control_db.query(F[0], int(F[1]) - 5, int(F[1]) + 5)
+                except Exception as inst:
+                    tabixErrorFlag = 1
+
+                control_flag = 0;
+                if tabixErrorFlag == 0:
+                    for record in records:
+                        if F[0] == record[0] and F[1] == record[1] and F[2] == record[2]:
+                            control_flag = 1
+
+                if control_flag == 1: continue
+            ##########
 
             # convert to map-splice2 coordinate
             F[1] = str(int(F[1]) - 1)

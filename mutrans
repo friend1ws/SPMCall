@@ -22,6 +22,9 @@ parser.add_argument("param", metavar = "param.cfg", default = None, type = str,
 parser.add_argument('-f', choices=['vcf', 'anno'], default = 'vcf',
                     help = "the format of mutation file vcf or annovar (tsv) format")
 
+parser.add_argument("--ctrl", metavar = "control_file", default = None, type = str,
+                    help = "the path to the control panel junction")
+
 args = parser.parse_args()
 
 main(args)

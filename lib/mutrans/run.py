@@ -14,6 +14,7 @@ def main(args):
     output_prefix = args.output_prefix
     # annotation_dir = args.annotation_dir
     is_anno = True if args.f == "anno" else False
+    control_file = args.ctrl
 
     parser = ConfigParser.SafeConfigParser()
     parser.read(args.param)
@@ -57,13 +58,16 @@ def main(args):
     ##########
     # processing splicing junction file
     utils.proc_star_junction(junction_file, output_prefix + ".mutran_tmp.junction.txt", 
+                             control_file,
                              parser.getint("star_junction_filt", "read_num_thres"), 
                              parser.getint("star_junction_filt", "overhang_thres"),
                              parser.getboolean("star_junction_filt", "remove_annotated"))
 
+
     annotate.annot_junction(output_prefix + ".mutran_tmp.junction.txt",
                               output_prefix + ".mutran_tmp.junction.annot.txt",
                               parser.get("annotation", "annotation_dir"))
+
     ##########
 
     ##########
