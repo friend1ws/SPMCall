@@ -203,10 +203,20 @@ def get_sv_junction(input_file, output_file, mutation_file, annotation_dir):
 
         if F[2] == "120608012":
             pass
-        if F[3] not in ["exon-skip"]: continue
-        firstSearchRegion = [F[0], int(F[1]) - sv_comp_margin, int(F[2]) + sv_comp_margin]
- 
+        if F[3] not in ["exon-skip", "spliced-chimera", "unspliced-chimera"]: continue
 
+        gene1 = F[4].split(';')
+        gene2 = F[7].split(';')
+        junction1 = F[6].split(';')
+        junction2 = F[9].split(';')
+
+        # just consider exon skipping genes
+        for i in range(0, len(gene1)):
+            if junction1[i] != "*" and junctino2[i] != "*": 
+                targetGene.append(gene1[i])
+                targetGene.append(gene2[i])
+        targetGene = list(set(targetGene))
+ 
         mutation_sv = []
         ##########
         # rough check for the mutation between the spliced region
