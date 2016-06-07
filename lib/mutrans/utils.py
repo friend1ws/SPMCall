@@ -134,6 +134,8 @@ def convert_genosv2bed(input_file, output_file):
     with open(input_file, 'r') as hin:
         for line in hin:
             F = line.rstrip('\n').split('\t')
+            if F[0].startswith('#'): continue
+            if F[0] == "Chr_1" and F[1] == "Pos_1": continue
             chr1, chr2 = F[0], F[3]
             start1, end1 = str(int(F[1]) - 1), F[1]
             start2, end2 = str(int(F[4]) - 1), F[4]
