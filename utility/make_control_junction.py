@@ -25,8 +25,8 @@ def make_control_junction(input_file_list, output_file, read_num_thres, overhang
                     if int(F[8]) < overhang_thres: continue 
          
                     # convert to map-splice2 coordinate
-                    F[1] = str(int(F[1]) - 1)
-                    F[2] = str(int(F[2]) + 1)
+                    # F[1] = str(int(F[1]) - 1)
+                    # F[2] = str(int(F[2]) + 1)
          
                     print >> hout, '\t'.join(F)
                 
@@ -52,6 +52,7 @@ def make_control_junction(input_file_list, output_file, read_num_thres, overhang
                 if temp_key != "":
                     print >> hout, temp_key + '\t' + str(read_num)
                 temp_key = key
+                temp_read_num = 0
             else:
                 if read_num > temp_read_num:
                     temp_read_num = read_num
