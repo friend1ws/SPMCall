@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import sys, os, subprocess, shutil
-import ConfigParser
+# import ConfigParser
 
 import utils
 import annotate
@@ -16,12 +16,12 @@ def main(args):
     is_anno = True if args.f == "anno" else False
     control_file = args.ctrl
     is_sv = True if args.sv else False
- 
+    is_debug = True if args.debug else False 
 
-    parser = ConfigParser.SafeConfigParser()
-    parser.read(args.param)
+    # parser = ConfigParser.SafeConfigParser()
+    # parser.read(args.param)
 
-    reference_genome = parser.get("alignment", "reference_genome")
+    reference_genome = args.reference_genome
 
     output_prefix_dir = os.path.dirname(output_prefix)
     if output_prefix_dir != "" and not os.path.exists(output_prefix_dir):
@@ -47,13 +47,13 @@ def main(args):
             sys.exit(1)
 
 
-        s_ret = subprocess.call([parser.get("software", "bgzip"), "-f", output_prefix + ".mutran_tmp.vcf"])
+        s_ret = subprocess.call(["bgzip", "-f", output_prefix + ".mutran_tmp.vcf"])
         if s_ret != 0:
             print >> sys.stderr, "Error in bgzip compression"
             sys.exit(1)
 
 
-        s_ret = subprocess.call([parser.get("software", "tabix"), "-p", "vcf", output_prefix + ".mutran_tmp.vcf.gz"])
+        s_ret = subprocess.call(["tabix", "-p", "vcf", output_prefix + ".mutran_tmp.vcf.gz"])
         if s_ret != 0:
             print >> sys.stderr, "Error in tabix indexing"
             sys.exit(1)
@@ -71,13 +71,13 @@ def main(args):
             sys.exit(1)
     
         
-        s_ret = subprocess.call([parser.get("software", "bgzip"), "-f", output_prefix + ".mutran_tmp.bedpe"])
+        s_ret = subprocess.call(["bgzip", "-f", output_prefix + ".mutran_tmp.bedpe"])
         if s_ret != 0:
             print >> sys.stderr, "Error in bgzip compression"
             sys.exit(1)
     
         
-        s_ret = subprocess.call([parser.get("software", "tabix"), "-p", "bed", output_prefix + ".mutran_tmp.bedpe.gz"])
+        s_ret = subprocess.call(["tabix", "-p", "bed", output_prefix + ".mutran_tmp.bedpe.gz"])
         if s_ret != 0:
             print >> sys.stderr, "Error in tabix indexing"
             sys.exit(1)
@@ -87,15 +87,12 @@ def main(args):
     ##########
     # processing splicing junction file
     utils.proc_star_junction(junction_file, output_prefix + ".mutran_tmp.junction.txt", 
-                             control_file,
-                             parser.getint("star_junction_filt", "read_num_thres"), 
-                             parser.getint("star_junction_filt", "overhang_thres"),
-                             parser.getboolean("star_junction_filt", "remove_annotated"))
+                             control_file, args.read_num_thres, args.overhang_thres, not args.keep_annotated)
 
 
     annotate.annot_junction(output_prefix + ".mutran_tmp.junction.txt",
                               output_prefix + ".mutran_tmp.junction.annot.txt",
-                              parser.get("annotation", "annotation_dir"))
+                              args.annotation_dir)
 
     ##########
 
@@ -105,15 +102,15 @@ def main(args):
         associate.get_snv_junction(output_prefix + ".mutran_tmp.junction.annot.txt",
                                    output_prefix + ".splicing_mutation.txt",
                                    output_prefix + ".mutran_tmp.vcf.gz",
-                                   parser.get("annotation", "annotation_dir"))
+                                   args.annotation_dir)
     else:
         associate.get_sv_junction(output_prefix + ".mutran_tmp.junction.annot.txt",
                                   output_prefix + ".splicing_sv.txt",
                                   output_prefix + ".mutran_tmp.bedpe.gz",               
-                                  parser.get("annotation", "annotation_dir"))
+                                  args.annotation_dir)
     ##########
 
-    if parser.getboolean("debug", "debug_mode") != True:
+    if is_debug != True:
         if not is_sv:
             subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.unsorted.vcf"])
             subprocess.call(["rm", "-rf", output_prefix + ".mutran_tmp.vcf.gz"])
