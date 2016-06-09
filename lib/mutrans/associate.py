@@ -229,10 +229,10 @@ def get_sv_junction(input_file, output_file, mutation_file, annotation_dir):
         sj_start = int(F[1]) - 1
         sj_end = int(F[2]) + 1
 
-        gene1 = F[4].split(';')
-        gene2 = F[7].split(';')
-        junction1 = F[6].split(';')
-        junction2 = F[9].split(';')
+        gene1 = F[5].split(';')
+        gene2 = F[8].split(';')
+        junction1 = F[7].split(';')
+        junction2 = F[10].split(';')
 
         """
         # just consider exon skipping genes
