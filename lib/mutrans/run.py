@@ -4,7 +4,8 @@ import sys, os, subprocess, shutil
 # import ConfigParser
 
 import utils
-import annotate
+import junc_utils.utils
+import junc_utils.annotate
 import associate 
 
 def main(args):
@@ -86,13 +87,13 @@ def main(args):
 
     ##########
     # processing splicing junction file
-    utils.proc_star_junction(junction_file, output_prefix + ".mutran_tmp.junction.txt", 
-                             control_file, args.read_num_thres, args.overhang_thres, not args.keep_annotated)
+    junc_utils.utils.proc_star_junction(junction_file, output_prefix + ".mutran_tmp.junction.txt", 
+                             control_file, args.read_num_thres, args.overhang_thres, not args.keep_annotated, False)
 
 
-    annotate.annot_junction(output_prefix + ".mutran_tmp.junction.txt",
+    junc_utils.annotate.annot_junction(output_prefix + ".mutran_tmp.junction.txt",
                               output_prefix + ".mutran_tmp.junction.annot.txt",
-                              args.annotation_dir)
+                              args.annotation_dir, 3, 10)
 
     ##########
 

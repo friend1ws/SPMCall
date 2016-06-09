@@ -27,7 +27,7 @@ with gzip.open(inputFile, 'r') as hin:
         gene_print_name = "---"
         if gene_type == "ref":
             # gene_print_name = symbol
-            gene_print_name = symbol + "(" + gene + ")"
+            gene_print_name = symbol + ";" + gene
         elif gene_type == "ens":
             gene_print_name = gene_id
         else:
